@@ -906,19 +906,61 @@
         document.querySelectorAll('.counter[data-target]').forEach(el => counterObs.observe(el));
 
         // FORM
-        const form = document.getElementById('contactForm'), feedback = document.getElementById('formFeedback'), submitBtn = document.getElementById('submitBtn');
-        form.addEventListener('submit', e => {
-            e.preventDefault();
-            const n = form.name.value.trim(), em = form.email.value.trim(), s = form.service.value, m = form.message.value.trim();
-            feedback.className = 'form-feedback'; feedback.style.display = 'none';
-            if (!n || !em || !s || !m) { feedback.className = 'form-feedback error'; feedback.textContent = 'Veuillez remplir tous les champs.'; feedback.style.display = 'block'; return; }
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { feedback.className = 'form-feedback error'; feedback.textContent = 'Veuillez entrer une adresse email valide.'; feedback.style.display = 'block'; return; }
-            submitBtn.disabled = true; submitBtn.textContent = 'Envoi en cours...';
-            setTimeout(() => {
-                feedback.className = 'form-feedback success'; feedback.textContent = 'Merci ! Votre message a bien été envoyé. Nous vous répondrons sous 24h.';
-                feedback.style.display = 'block'; form.reset(); submitBtn.disabled = false; submitBtn.textContent = 'Envoyer la demande';
-            }, 1500);
+const form = document.getElementById('contactForm'),
+      feedback = document.getElementById('formFeedback'),
+      submitBtn = document.getElementById('submitBtn');
+
+form.addEventListener('submit', async e => {
+    e.preventDefault();
+
+    const n  = form.name.value.trim(),
+          em = form.email.value.trim(),
+          s  = form.service.value,
+          m  = form.message.value.trim();
+
+    feedback.className = 'form-feedback';
+    feedback.style.display = 'none';
+
+    if (!n || !em || !s || !m) {
+        feedback.className = 'form-feedback error';
+        feedback.textContent = 'Veuillez remplir tous les champs.';
+        feedback.style.display = 'block';
+        return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+        feedback.className = 'form-feedback error';
+        feedback.textContent = 'Veuillez entrer une adresse email valide.';
+        feedback.style.display = 'block';
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Envoi en cours…';
+
+    try {
+        const res = await fetch('https://formspree.io/f/xojpwvdn', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' },
+            body: new FormData(form)
         });
+
+        if (res.ok) {
+            feedback.className = 'form-feedback success';
+            feedback.textContent = 'Merci ! Votre message a bien été envoyé. Nous vous répondrons sous 24h.';
+            feedback.style.display = 'block';
+            form.reset();
+        } else {
+            throw new Error();
+        }
+    } catch {
+        feedback.className = 'form-feedback error';
+        feedback.textContent = 'Une erreur est survenue. Veuillez réessayer ou nous contacter directement à info@metamorphicmotion.ch.';
+        feedback.style.display = 'block';
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Envoyer la demande';
+    }
+});
 
         // LEGAL/PRIVACY MODALS
         function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
